@@ -13,6 +13,13 @@ The code is designed to hide the details of interacting with ODIN to make adopti
   - Trigger a time reference (leakage event) in either a specific neuron or globally.
   - Read output spiking events from ODIN's output AER interface.
 An extract from the header file containing these functions is shown below.
+## Initial Mandatory Setup
+To begin using the provided functions, there are two key tasks we must do before we can being to interact with ODIN. These are:
+1. Define the physical connections between the pins of the microcontroller and the pins of tinyODIN.
+2. Define functions to do the following: set a GPIO pin's direction, write to a GPIO pin, and read from a GPIO pin.
+How to implement these functions will depend on the micrcontroller you are doing. However, below is an example for when using the Zynq 7000 SoC.
+### Defining physical pin connections
+### Defining GPIO functions
 ## Initialising Odin and Setting Configuration Registers
 Once the physical pin mappings have been defined, and the custom functions for reading and writing to the GPIOs of your specific chip are defined, we can then instantiate a instance of the Odin chip using the code below. In general, when using a function provided by this library you will need to pass the pointer to the instance of the Odin chip. In this example the ``` odin_enableChip(&odin) ``` function is used to ensure the reset pin is pulled low ensuring ODIN is running and not currently reset. 
 ```c
