@@ -32,10 +32,39 @@ void main(){
 ```
 
 ## Reading and Writing Synapse Values
+```c
+#include "odin.h"
+void main(){
+	Odin odin;
+	odin_initChip(&odin, setPinDirection, writeToPin, readFromPin);
+	odin_enableChip(&odin).
+
+	u8 preneuron = 0;
+	u8 postneuron = 1;
+	u8 synapse_weight = 2;
+	odin_setSynapseValue(&odin, preneuron, postneuron, snapse_weight);
+}
+```
 
 ## Reading and Writing Neuron Properties
 
 ## AER Events: Triggering spikes, leakage events and reading outputs
+```c
+#include "odin.h"
+void main(){
+	Odin odin;
+	odin_initChip(&odin, setPinDirection, writeToPin, readFromPin);
+	odin_enableChip(&odin).
+
+	u8 preneuron = 0;
+	u8 postneuron = 1;
+	u8 synapse_weight = 2;
+	odin_setSynapseValue(&odin, preneuron, postneuron, snapse_weight);
+
+	odin_triggerPresynapticEvent(&odin, preneuron);
+	odin_triggerGlobalLeakageEvent(&odin);
+}
+```
 
 # Code Walkthrough
 ```c
