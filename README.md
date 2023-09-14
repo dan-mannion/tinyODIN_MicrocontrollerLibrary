@@ -14,6 +14,15 @@ The code is designed to hide the details of interacting with ODIN to make adopti
   - Read output spiking events from ODIN's output AER interface.
 An extract from the header file containing these functions is shown below.
 ## Initialising Odin and Setting Configuration Registers
+Once the physical pin mappings have been defined, and the custom functions for reading and writing to the GPIOs of your specific chip are defined, we can then instantiate a instance of the Odin chip using the code below. In general, when using a function provided by this library you will need to pass the pointer to the instance of the Odin chip. In this example the ``` odin_enableChip(&odin) ``` function is used to ensure the reset pin is pulled low ensuring ODIN is running and not currently reset. 
+```c
+#include "odin.h"
+void main(){
+	Odin odin;
+	odin_initChip(&odin, setPinDirection, writeToPin, readFromPin);
+	odin_enableChip(&odin). 
+}
+```
 
 ## Reading and Writing Synapse Values
 
