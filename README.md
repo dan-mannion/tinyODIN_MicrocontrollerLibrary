@@ -13,7 +13,64 @@ The code is designed to hide the details of interacting with ODIN to make adopti
   - Trigger a time reference (leakage event) in either a specific neuron or globally.
   - Read output spiking events from ODIN's output AER interface.
 An extract from the header file containing these functions is shown below.
+## Initialising Odin and Setting Configuration Registers
 
-https://github.com/dan-mannion/tinyODIN_MicrocontrollerLibrary/blob/63ce51020466300bb6bb27979b2ead378d8fa062/odin.h#L28C1-L47C67
+## Reading and Writing Synapse Values
+
+## Reading and Writing Neuron Properties
+
+## AER Events: Triggering spikes, leakage events and reading outputs
+
+# Code Walkthrough
+```c
+void odin_initChip(Odin *odin, XGpio *gpio,
+                void (*set_pin_direction_function) (u8, u8),
+                void (*write_to_pin_function) (u8, u8),
+                u8 (*read_from_pin_function) (u8));
+void odin_enableChip(Odin *odin);
+void odin_disableChip(Odin *odin);
+void odin_enableOpenLoop(Odin *odin);
+void odin_disableOpenLoop(Odin *odin);
+int odin_isEventAtOutput(Odin *odin);
+u8 odin_readEventAtOutput(Odin *odin);
+int odin_stimulateNeuron(Odin *odin, u8 neuron_index, u8 synapse_value);
+int odin_triggerPresynapticEvent(Odin *odin, u8 presynaptic_neuron_index);
+int odin_triggerGlobalLeakageEvent(Odin *odin);
+int odin_triggerLeakageEventForNeuron(Odin *odin, u8 neuron_index);
 
 
+void printNeuron(UARTInterface *uart, Neuron neuron);
+Synapse odin_getSynapse(Odin *odin, u8 preneuron, u8 postneuron);
+void odin_setSynapseValue(Odin *odin, u8 preneuron, u8 postneuron, u8 synapse_value);
+Neuron odin_getNeuron(Odin *odin, u8 neuron_index);
+void odin_setNeuronProperties(Odin *odin, Neuron neuron_to_write);
+```
+
+When using these functions, you will encounter three key struct types: The Odin struct type represents the ODIN chip and stores both the AER and SPI interfaces. You should need to modify or handle the contents of this type. It is defined in odin.h.
+```c
+typedef struct{
+	GPIO_Interface gpio_interface;
+	XGpio *gpio;
+	SPI_Interface *spi;
+	u8 reset_pin;
+	AER_Interface *aer_in;
+	AER_Interface *aer_out;
+}Odin;
+```
+The Neuron and Synapse types represent the neurons and synapses of the chip. The definintions of these structs are found in odin_typedefs.h. 
+```c
+typedef struct{
+	SynapseAddress memory_address;
+	u8 preneuron;
+	u8 postneuron;
+	u8 value;
+}Synapse;
+
+typedef struct{
+	u16 index;
+	u16 membrane_potential;
+	u16 threshold;
+	u8 leakage_value;
+	u8 disabled;
+}Neuron;
+```
