@@ -46,7 +46,20 @@ void main(){
 	odin_setSynapseValue(&odin, preneuron, postneuron, snapse_weight);
 }
 ```
+If we want to read the value of a synapse we use the ```odin_getSynapse``` functions which returns a ```Synapse``` struct.
+```c
+#include "odin.h"
+void main(){
+	Odin odin;
+	odin_initChip(&odin, setPinDirection, writeToPin, readFromPin);
+	odin_enableChip(&odin).
 
+	u8 preneuron = 0;
+	u8 postneuron = 1;
+
+	Synapse synapse_read = odin_getSynapse(&odin, preneuron, postneuron);
+}
+```
 ## Reading and Writing Neuron Properties
 When handling neurons it is useful to use the ```Neuron``` struct typedef. This struct type contains all the properties associated with a neuron within ODIN. The struct is shown below. 
 ```c
