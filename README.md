@@ -126,11 +126,10 @@ Neuron odin_getNeuron(Odin *odin, u8 neuron_index);
 void odin_setNeuronProperties(Odin *odin, Neuron neuron_to_write);
 ```
 
-When using these functions, you will encounter three key struct types: The Odin struct type represents the ODIN chip and stores both the AER and SPI interfaces. You should need to modify or handle the contents of this type. It is defined in odin.h.
+When using these functions, you will encounter three key struct types: The Odin struct type represents the ODIN chip and stores both the AER and SPI interfaces. You shouldn't need to modify or handle the contents of this type. It is defined in odin.h.
 ```c
 typedef struct{
 	GPIO_Interface gpio_interface;
-	XGpio *gpio;
 	SPI_Interface *spi;
 	u8 reset_pin;
 	AER_Interface *aer_in;
