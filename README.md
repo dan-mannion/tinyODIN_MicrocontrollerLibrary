@@ -32,6 +32,7 @@ void main(){
 ```
 
 ## Reading and Writing Synapse Values
+Setting synapses values can be done using the ```odin_setSynapseValue``` function. It takes the indices of the presynaptic and post synaptic neuron which the synapse connects as well as the vlaue you wish to set the weight to. The weights of ODIN are a 4bit signed weight, you should not enter a value outside of this range. 
 ```c
 #include "odin.h"
 void main(){
@@ -47,6 +48,40 @@ void main(){
 ```
 
 ## Reading and Writing Neuron Properties
+When handling neurons it is useful to use the ```Neuron``` struct typedef. This struct type contains all the properties associated with a neuron within ODIN. The struct is shown below. 
+```c
+typedef struct{
+	u16 index;
+	u16 membrane_potential;
+	u16 threshold;
+	u8 leakage_value;
+	u8 disabled;
+}Neuron;
+```
+When reading and writing neurons a struct of this type should be used. In the demonstration below we first write the settings of the neuron at index 0, then read the neuron at index 1. 
+```c
+#include "odin.h"
+void main(){
+	Odin odin;
+	odin_initChip(&odin, setPinDirection, writeToPin, readFromPin);
+	odin_enableChip(&odin).
+
+	// Write to neuron at index 0
+	Neuron neuron;
+	neuron.index = 0;
+	neuron.membrane_potential = 0;
+	neuron.threshold = 0x8;
+	neuron.leakage_value = 1;
+	neuron.disabled = 0;
+
+	odin_setNeuronProperties(&odin, neuron);
+
+	// Read from neuron at index 1
+	neuron = odin_getNeuron(&odin, 1);
+	
+}
+
+```
 
 ## AER Events: Triggering spikes, leakage events and reading outputs
 ```c
