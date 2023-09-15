@@ -1,5 +1,5 @@
 # tinyODIN_MicrocontrollerLibrary
-This repository contains functions to make interfacing with tinyODIN quick and simple. It is designed to be used within code operating within a microcontroller which has direct GPIO connetions to the revelent pins of the FPGA running an instance of tinyODIN. 
+This repository contains functions to make interfacing with tinyODIN quick and simple. It is designed to be used within code operating on a microcontroller with direct GPIO connetions to the revelent pins of the FPGA running an instance of tinyODIN. 
 
 # Getting Started
 The code is designed to hide the details of interacting with ODIN to make adoption quick and simple. For this reason you should only need to work with the functions contained within odin.c/odin.h. These functions allow you to:
