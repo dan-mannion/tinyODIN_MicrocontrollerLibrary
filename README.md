@@ -37,6 +37,50 @@ The pin mappings are defined in [hardware_specific.h](https://github.com/dan-man
 #define AER_IN_ADDRESS_OFFSET 18
 ```
 ### Defining GPIO functions
+So that this library remains largely agnostic to the platform it is being run on, it assumes no knowledge of how manage GPIO pins. For this reason when we initialise the Odin struct using ```odin_initChip``` we must pass pointers to three important functions:
+1. A function to set the direction of a GPIO pin.
+2. A function to write to a GPIO pin.
+3. A function to read from a GPIO pin.
+
+To use this library we must write these functions for our specific microcontroller and pass the pointers to these functions. When writing the functions they should adhere to the following definitions:
+```c
+void setPinDirection(u8 pin, u8 mode);
+void writeToPin(u8 pin, u8 value);
+u8 readFromPin(u8 pin);
+```
+For example, the setPinDirection function should accept two parameters of type u8. The first parameter corresponds to the pin number of the gpio in question and the second refers to whether the pin is being set to an INPUT and an OUTPUT. If the pin is being set as an input the value 1 will be passed; for an output the value 0 will be passed. The code we write must handle these parameters. Below we have given examples for each of these functions if we were running our code on an Arduino based microcontroller. 
+```c
+// Example GPIO function definitions for Arduino based microcontroller. 
+void my_gpioSetPinDirection(u8 pin, u8 mode){
+	switch(mode){
+		case(0):
+			pinMode(pin, OUTPUT);
+			break;
+		case(1):
+			pinMode(pin, INTPUT);
+	}
+}
+void my_gpioWriteToPin(u8 pin, u8 value){
+	switch(value){
+		case(0):
+			digitalWrite(pin, LOW);
+			break;
+		case(1):
+			digitalWrite(pin, HIGH);
+	}
+}
+u8 my_gpioReadFromPin(u8 pin){
+	return (u8) (digitalRead(pin));
+}
+```
+Once these functions have been defined, we then pass these during the initialisiation of the odin struct as shown below:
+```c
+#include "odin.h"
+void main(){
+	Odin odin;
+	odin_initChip(&odin, my_gpioSetPinDirection, my_gpioWriteToPin, my_gpioReadFromPin);
+}
+```
 ## Initialising Odin and Setting Configuration Registers
 Once the physical pin mappings have been defined, and the custom functions for reading and writing to the GPIOs of your specific chip are defined, we can then instantiate a instance of the Odin chip using the code below. In general, when using a function provided by this library you will need to pass the pointer to the instance of the Odin chip. In this example the ``` odin_enableChip(&odin) ``` function is used to ensure the reset pin is pulled low ensuring ODIN is running and not currently reset. 
 ```c
