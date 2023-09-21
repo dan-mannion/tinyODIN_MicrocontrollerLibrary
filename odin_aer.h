@@ -11,16 +11,6 @@
 #include "xbasic_types.h"
 #include "hardware_specific.h"
 
-#define AER_OUT_REQ_PIN 5
-#define AER_OUT_ACK_PIN 4
-#define AER_OUT_ADDRESS_WIDTH 10
-#define AER_OUT_ADDRESS_OFFSET 6
-
-#define AER_IN_REQ_PIN 16
-#define AER_IN_ACK_PIN 17
-#define AER_IN_ADDRESS_WIDTH 8
-#define AER_IN_ADDRESS_OFFSET 18
-
 typedef struct{
 	GPIO_Interface *gpio_interface;
 	u8 req_pin;	//Pin number of the req pin.

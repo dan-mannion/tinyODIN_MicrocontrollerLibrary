@@ -103,6 +103,20 @@ void spi_disableOpenLoop(SPI_Interface *spi){
 	SPI_write(spi, address);
 	SPI_write(spi, data);
 }
+void spi_set_SPI_MAX_NEUR(SPI_Interface *spi, u8 max_neurons){
+	u32 address = 0;
+	u32 data = 0;
+	SPIAddressField addr;
+	addr.read = 0;
+	addr.write = 0;
+	addr.cmd = 0b00;
+	addr.address = 3;
+	address = spi_addressToSPIBitStream(addr);
+
+	data += max_neurons;
+	SPI_write(spi, address);
+	SPI_write(spi, data);
+}
 
 u32 spi_convertSynapseAddressToSPIFormat(SynapseAddress synapse){
 	u32 synapse_address_spi_format = 0;

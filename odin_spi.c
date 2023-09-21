@@ -45,12 +45,10 @@ void SPI_write(SPI_Interface *spi, u32 to_write){
 			spi->gpio_interface->write_to_pin(spi->mosi_pin, HIGH);
 		else
 			spi->gpio_interface->write_to_pin(spi->mosi_pin, LOW);
-		delay();
+
 		spi->gpio_interface->write_to_pin(spi->sclk_pin, HIGH);
-		delay();
 	}
 	spi->gpio_interface->write_to_pin(spi->sclk_pin, LOW);
-	delay();
 }
 
 /*
@@ -60,7 +58,7 @@ u32 SPI_read(SPI_Interface *spi){
 	int i;
 	u32 output_buffer = 0x00;
 	spi->gpio_interface->write_to_pin(spi->sclk_pin, LOW);
-		delay();
+
 		for(i=spi->read_width-1;i>=0;i--){
 			//Send clock high, delay, read miso, send clock low.
 			spi->gpio_interface->write_to_pin(spi->sclk_pin, HIGH);
@@ -69,10 +67,10 @@ u32 SPI_read(SPI_Interface *spi){
 			}else{
 				output_buffer = output_buffer & ~(1<<i);
 			}
-			delay();
+
 			spi->gpio_interface->write_to_pin(spi->sclk_pin, LOW);
 			/* Wait a small amount of time for SPI slave to update output */
-			delay();
+
 		}
 		return output_buffer;
 }

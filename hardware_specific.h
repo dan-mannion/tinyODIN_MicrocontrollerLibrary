@@ -8,6 +8,28 @@
 #ifndef SRC_HARDWARE_SPECIFIC_H_
 #define SRC_HARDWARE_SPECIFIC_H_
 
+/*
+ * Pin definitions
+ */
+#define RESET_PIN 2
+#define SPI_SCLK_PIN 0
+#define SPI_MOSI_PIN 1
+#define SPI_MISO_PIN 3
+
+#define AER_OUT_REQ_PIN 5
+#define AER_OUT_ACK_PIN 4
+#define AER_OUT_ADDRESS_WIDTH 10
+#define AER_OUT_ADDRESS_OFFSET 6
+
+#define AER_IN_REQ_PIN 16
+#define AER_IN_ACK_PIN 17
+#define AER_IN_ADDRESS_WIDTH 8
+#define AER_IN_ADDRESS_OFFSET 18
+
+/*
+ * End of pin definitions
+ */
+
 #define INPUT 1
 #define OUTPUT 0
 #define HIGH 1

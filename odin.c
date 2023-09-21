@@ -6,203 +6,101 @@
  */
 #include "odin.h"
 #include "macros.h"
-#include "odin_spi.h"
 #include "uart.h"
+#include "hardware_specific.h"
 
 
+void odin_initChip(Odin *odin, XGpio *gpio,
+		void (*set_pin_direction_function) (u8, u8),
+		void (*write_to_pin_function) (u8, u8),
+		u8 (*read_from_pin_function) (u8)){
+	odin->gpio_interface.set_pin_direction = set_pin_direction_function;
+	odin->gpio_interface.write_to_pin= write_to_pin_function;
+	odin->gpio_interface.read_from_pin = read_from_pin_function;
+	odin->gpio = gpio;
 
-u32 odin_addressToSPIBitStream(SPIAddressField address){
-	int i;
-	u32 reg = 0;
+	odin->reset_pin = RESET_PIN;
+	odin->gpio_interface.set_pin_direction(odin->reset_pin, OUTPUT);
+	odin_disableChip(odin);
 
-	if(address.read == 1){
-		bitset(&reg, ADDRESS_READ_OFFSET);
+	u8 write_width = 20;
+	u8 read_width = 20;
+	SPI_initInterface(odin->spi, &(odin->gpio_interface), SPI_SCLK_PIN, SPI_MOSI_PIN, SPI_MISO_PIN, write_width, read_width);
+
+	odin->aer_in = aer_initInputInterface(odin->aer_in, &(odin->gpio_interface));
+	odin->aer_out = aer_initOutputInterface(odin->aer_out, &(odin->gpio_interface));
+
+	odin_enableChip(odin);
+	odin_enableOpenLoop(odin);
+	odin_setMaxNeuronIndexToBeProcessed(odin, 0xff);
+}
+void odin_enableChip(Odin *odin){
+	odin->gpio_interface.write_to_pin(odin->reset_pin, LOW);
+}
+void odin_disableChip(Odin *odin){
+	odin->gpio_interface.write_to_pin(odin->reset_pin, HIGH);
+}
+void odin_enableOpenLoop(Odin *odin){
+	spi_activateSPIGateActivity(odin->spi);
+	spi_enableOpenLoop(odin->spi);
+	spi_deactivateSPIGateActivity(odin->spi);
+}
+void odin_disableOpenLoop(Odin *odin){
+	spi_activateSPIGateActivity(odin->spi);
+	spi_disableOpenLoop(odin->spi);
+	spi_deactivateSPIGateActivity(odin->spi);
+}
+void odin_setMaxNeuronIndexToBeProcessed(Odin *odin, u8 max_neurons){
+	spi_activateSPIGateActivity(odin->spi);
+	spi_set_SPI_MAX_NEUR(odin->spi, max_neurons);
+	spi_deactivateSPIGateActivity(odin->spi);
+}
+
+int odin_isEventAtOutput(Odin *odin){
+	if(aer_isRequest(odin->aer_in)){
+		return 1;
 	}else{
-		bitset(&reg, ADDRESS_READ_OFFSET);
+		return 0;
+	}
+}
+u8 odin_readEventAtOutput(Odin *odin){
+	u8 address;
+	address = aer_readEventFromOutput(odin->aer_in);
+	return address;
+}
+int odin_stimulateNeuron(Odin *odin, u8 neuron_index, u8 synapse_value){
+	if(!odin_isEventAtOutput(odin)){
+		aer_stimulateNeuron(odin->aer_out, neuron_index, synapse_value);
+		return 1;
+	}else{
+		return 0;
 	}
 
-	if(address.write == 1){
-			bitset(&reg, ADDRESS_WRITE_OFFSET);
-	}else{
-			bitreset(&reg, ADDRESS_WRITE_OFFSET);
-	}
-
-	for(i=ADDRESS_CMD_WIDTH-1;i>=0;i--){
-		if((address.cmd & (1<<(i)))==0){
-			bitreset(&reg, ADDRESS_CMD_OFFSET+i);
+}
+int odin_triggerPresynapticEvent(Odin *odin, u8 presynaptic_neuron_index){
+	if(!odin_isEventAtOutput(odin)){
+			aer_triggerPresynapticEvent(odin->aer_out, presynaptic_neuron_index);
+			return 1;
 		}else{
-			bitset(&reg, ADDRESS_CMD_OFFSET+i);
+			return 0;
 		}
+}
+int odin_triggerGlobalLeakageEvent(Odin *odin){
+	if(!odin_isEventAtOutput(odin)){
+		aer_triggerGlobalLeakageEvent(odin->aer_out);
+		return 1;
+	}else{
+		return 0;
 	}
-	for(i=ADDRESS_ADDRESS_WIDTH-1;i>=0;i--){
-			if((address.address & (1<<(i)))==0){
-				bitreset(&reg, ADDRESS_ADDRESS_OFFSET+i);
-			}else{
-				bitset(&reg, ADDRESS_ADDRESS_OFFSET+i);
-			}
+}
+int odin_triggerLeakageEventForNeuron(Odin *odin, u8 neuron_index){
+	if(!odin_isEventAtOutput(odin)){
+			aer_triggerLeakageEventForNeuron(odin->aer_out, neuron_index);
+			return 1;
+		}else{
+			return 0;
 		}
-	return reg;
 }
-
-void odin_spi_activateSPIGateActivity(SPI_Interface *spi, XGpio *gpio){
-	u32 address = 0;
-	u32 data = 0;
-
-	SPIAddressField addr;
-	addr.read = 0;
-	addr.write = 0;
-	addr.cmd = 0b00;
-	addr.address = 0;
-	address = odin_addressToSPIBitStream(addr);
-
-	bitset(&data, 0); // Set to gate network activity.
-
-	SPI_write(spi, gpio, address);
-	SPI_write(spi, gpio, data);
-}
-void odin_spi_deactivateSPIGateActivity(SPI_Interface *spi, XGpio *gpio){
-	u32 address = 0;
-	u32 data = 0;
-
-	SPIAddressField addr;
-	addr.read = 0;
-	addr.write = 0;
-	addr.cmd = 0b00;
-	addr.address = 0;
-	address = odin_addressToSPIBitStream(addr);
-
-	bitreset(&data, 0); // Set to gate network activity.
-
-	SPI_write(spi, gpio, address);
-	SPI_write(spi, gpio, data);
-}
-void odin_spi_enableOpenLoop(SPI_Interface *spi, XGpio *gpio){
-	u32 address = 0;
-	u32 data = 0;
-
-	SPIAddressField addr;
-	addr.read = 0;
-	addr.write = 0;
-	addr.cmd = 0b00;
-	addr.address = 1;
-	address = odin_addressToSPIBitStream(addr);
-
-	bitset(&data, 0); // Set to gate network activity.
-
-	SPI_write(spi, gpio, address);
-	SPI_write(spi, gpio, data);
-}
-void odin_spi_disableOpenLoop(SPI_Interface *spi, XGpio *gpio){
-	u32 address = 0;
-	u32 data = 0;
-
-	SPIAddressField addr;
-	addr.read = 0;
-	addr.write = 0;
-	addr.cmd = 0b00;
-	addr.address = 1;
-	address = odin_addressToSPIBitStream(addr);
-
-	bitreset(&data, 0); // Set to gate network activity.
-
-	SPI_write(spi, gpio, address);
-	SPI_write(spi, gpio, data);
-}
-SynapseAddress odin_getSynapseAddress(u8 preneuron, u8 postneuron){
-	SynapseAddress synapse;
-
-	u16 post_neuron_masked_bits_7_3 = (((u16) postneuron)&(0xF8))>>3;
-	u16 post_neuron_masked_bits_2_1 = (((u16) postneuron)&(0x06))>>1;
-	u8 post_neuron_masked_bit_0 = (u8) (postneuron&0x01);
-
-	synapse.word_address = 0;
-	synapse.word_address |= post_neuron_masked_bits_7_3;
-	synapse.word_address |= ((u16) preneuron)<<5;
-
-	synapse.byte_address = 0;
-	synapse.byte_address |= post_neuron_masked_bits_2_1;
-	synapse.upper_lower_nibble = post_neuron_masked_bit_0;
-
-	return synapse;
-}
-u32 odin_convertSynapseAddressToSPIFormat(SynapseAddress synapse){
-	u32 synapse_address_spi_format = 0;
-	synapse_address_spi_format |= synapse.word_address;
-	synapse_address_spi_format |= synapse.byte_address << 8;
-	return synapse_address_spi_format;
-}
-
-u32 odin_dataToSPIBitStream(SPIDataField datafield){
-	u32 datafield_spi = 0;
-	datafield_spi |= datafield.mask << 8;
-	datafield_spi |= datafield.data;
-	return datafield_spi;
-}
-void odin_spi_writeSynapseMemory(SPI_Interface *spi, XGpio *gpio, u8 preneuron_index, u8 postneuron_index, u8 synapse_value){
-	u32 address=0;
-	u32 data_spi_format = 0;
-
-	SynapseAddress synapse_address = odin_getSynapseAddress(preneuron_index, postneuron_index);
-	u32 synapse_address_spi_format = odin_convertSynapseAddressToSPIFormat(synapse_address);
-
-	SPIAddressField addr;
-	addr.read = 0;
-	addr.write = 1;
-	addr.cmd = 0b10;
-	addr.address = synapse_address_spi_format;
-	address = odin_addressToSPIBitStream(addr);
-
-	SPIDataField datafield;
-	if(synapse_address.upper_lower_nibble==0){
-		datafield.mask = 0xF0;
-		datafield.data = synapse_value;
-	}else{
-		datafield.mask = 0x0F;
-		datafield.data = synapse_value<<4;
-	}
-
-	data_spi_format = odin_dataToSPIBitStream(datafield);
-
-
-	SPI_write(spi,gpio, address);
-	SPI_write(spi,gpio, data_spi_format);
-}
-u32 odin_spi_readSynapseMemory(SPI_Interface *spi, XGpio *gpio, u8 preneuron_index, u8 postneuron_index){
-	u32 address_bitstream=0;
-	u32 received = 0;
-
-	SynapseAddress synapse_address = odin_getSynapseAddress(preneuron_index, postneuron_index);
-	u32 synapse_address_spi_format = odin_convertSynapseAddressToSPIFormat(synapse_address);
-
-	SPIAddressField addr;
-	addr.read = 1;
-	addr.write = 0;
-	addr.cmd = 0b10;
-	addr.address = synapse_address_spi_format;
-
-	address_bitstream = odin_addressToSPIBitStream(addr);
-
-	received = SPI_writeRead(spi, gpio, address_bitstream);
-	// Now mask received depending on whether upper or lower nibble.
-	u8 mask;
-	if(synapse_address.upper_lower_nibble==0){
-		mask = 0x0F;
-		received = received & mask;
-	}else{
-		mask = 0xF0;
-		received = (received & mask)>>4;
-	}
-	return received;
-}
-Synapse odin_getSynapse(SPI_Interface *spi, XGpio *gpio, u8 preneuron, u8 postneuron){
-	Synapse synapse;
-	synapse.preneuron = preneuron;
-	synapse.postneuron = postneuron;
-	synapse.memory_address = odin_getSynapseAddress(preneuron, postneuron);
-	synapse.value = odin_spi_readSynapseMemory(spi, gpio, preneuron, postneuron);
-	return synapse;
-}
-
 void printNeuron(UARTInterface *uart, Neuron neuron){
 	uart_print(uart, "\tMembrane Potential: ");
 	    		uart_printu16(uart, neuron.membrane_potential);
@@ -218,68 +116,76 @@ void printNeuron(UARTInterface *uart, Neuron neuron){
 	    		uart_printLine(uart, "");
 }
 
-u16 odin_convertNeuronAddressToSPIFormat(u8 neuron_index, u8 byte_address){
-	u32 spi_format = 0;
-	spi_format |= neuron_index;
-	spi_format |= byte_address<<8;
-	return spi_format;
+Synapse odin_getSynapse(Odin *odin, u8 preneuron, u8 postneuron){
+	Synapse synapse;
+	synapse.preneuron = preneuron;
+	synapse.postneuron = postneuron;
+	synapse.memory_address = spi_getSynapseAddress(preneuron, postneuron);
+	spi_activateSPIGateActivity(odin->spi);
+	synapse.value = spi_readSynapseMemory(odin->spi, preneuron, postneuron);
+	spi_deactivateSPIGateActivity(odin->spi);
+	return synapse;
 }
-Neuron odin_spi_readNeuronMemory(SPI_Interface *spi, XGpio *gpio, u8 neuron_index, Neuron *neuron){
-	u32 address_bitstream = 0;
-	u32 received = 0;
-	u32 raw_neuron_memory=0;
-
-	neuron->index = neuron_index;
-	SPIAddressField addr;
-	addr.read = 1;
-	addr.write = 0;
-	addr.cmd = 0b01;
-	u8 current_byte;
-	for(current_byte=0; current_byte<4; current_byte++){
-		// Need to read all four bytes;
-
-		addr.address = odin_convertNeuronAddressToSPIFormat(neuron_index, current_byte);
-
-		address_bitstream = odin_addressToSPIBitStream(addr);
-		received = SPI_writeRead(spi, gpio, address_bitstream);
-		raw_neuron_memory |= ((received&(0xff))<<(current_byte*8));
-	}
-
-	neuron->membrane_potential = raw_neuron_memory&(0xfff);
-	neuron->threshold = (raw_neuron_memory&(0xfff << 12))>>12;
-	neuron->leakage_value = (raw_neuron_memory&(0x7f << 24))>>24;
-	neuron->disabled = (raw_neuron_memory & (0x01 << 31))>>31;
+u8 odin_getSynapseWeight(Odin *odin, u8 preneuron, u8 postneuron){
+	spi_activateSPIGateActivity(odin->spi);
+	u8 weight = spi_readSynapseMemory(odin->spi, preneuron, postneuron);
+	spi_deactivateSPIGateActivity(odin->spi);
+	return weight;
 }
-u32 odin_getMemoryRepresentationOfNeuron(Neuron neuron){
-	u32 neuron_entry = 0;
-	neuron_entry |= neuron.disabled << 31;
-	neuron_entry |= neuron.leakage_value << 24;
-	neuron_entry |= neuron.threshold << 12;
-	neuron_entry |= neuron.membrane_potential;
-	return neuron_entry;
+void odin_setSynapseValue(Odin *odin, u8 preneuron, u8 postneuron, u8 synapse_value){
+	spi_activateSPIGateActivity(odin->spi);
+	spi_writeSynapseMemory(odin->spi, preneuron, postneuron, synapse_value);
+	spi_deactivateSPIGateActivity(odin->spi);
 }
-void odin_spi_writeNeuronMemory(SPI_Interface *spi, XGpio *gpio, Neuron neuron){
-	u32 address_bitstream=0;
-	SPIAddressField addr;
-	addr.read = 0;
-	addr.write = 1;
-	addr.cmd = 0b01;
-
-	SPIDataField datafield;
-	u32 data_spi_format;
-	datafield.mask = 0;
-	u32 neuron_memory_format = odin_getMemoryRepresentationOfNeuron(neuron);
-	u8 current_byte;
-	for(current_byte=0; current_byte<4; current_byte++){
-		// Need to read all four bytes;
-		addr.address = odin_convertNeuronAddressToSPIFormat(neuron.index, current_byte);
-		address_bitstream = odin_addressToSPIBitStream(addr);
-		datafield.data = (neuron_memory_format & (0xff << (8*current_byte))) >> (8*current_byte);
-		data_spi_format = odin_dataToSPIBitStream(datafield);
-
-		SPI_write(spi, gpio, address_bitstream);
-		SPI_write(spi, gpio, data_spi_format);
-	}
+Neuron odin_getNeuron(Odin *odin, u8 neuron_index){
+	Neuron neuron;
+	spi_activateSPIGateActivity(odin->spi);
+	spi_readNeuronMemory(odin->spi, neuron_index, &neuron);
+	spi_deactivateSPIGateActivity(odin->spi);
+	return neuron;
 }
+u16 odin_getNeuronMembranePotential(Odin *odin, u8 neuron_index){
+	Neuron neuron = odin_getNeuron(odin, neuron_index);
+	return neuron.membrane_potential;
+}
+u16 odin_getNeuronThreshold(Odin *odin, u8 neuron_index){
+	Neuron neuron = odin_getNeuron(odin, neuron_index);
+	return neuron.threshold;
+}
+u8 odin_getNeuronLeakageTerm(Odin *odin, u8 neuron_index){
+	Neuron neuron = odin_getNeuron(odin, neuron_index);
+	return neuron.leakage_value;
+}
+u8 odin_getNeuronDisabledState(Odin *odin, u8 neuron_index){
+	Neuron neuron = odin_getNeuron(odin, neuron_index);
+	return neuron.disabled;
+}
+void odin_setNeuronProperties(Odin *odin, Neuron neuron_to_write){
+	spi_activateSPIGateActivity(odin->spi);
+	spi_writeNeuronMemory(odin->spi, neuron_to_write);
+	spi_deactivateSPIGateActivity(odin->spi);
+}
+
+void odin_setNeuronMembranePotential(Odin *odin, u8 neuron_index, u16 membrane_potential){
+	Neuron neuron = odin_getNeuron(odin, neuron_index);
+	neuron.membrane_potential = membrane_potential;
+	odin_setNeuronProperties(odin, neuron);
+}
+void odin_setNeuronThreshold(Odin *odin, u8 neuron_index, u16 threshold){
+	Neuron neuron = odin_getNeuron(odin, neuron_index);
+	neuron.threshold = threshold;
+	odin_setNeuronProperties(odin, neuron);
+}
+void odin_setNeuronLeakageTerm(Odin *odin, u8 neuron_index, u8 leakage_term){
+	Neuron neuron = odin_getNeuron(odin, neuron_index);
+	neuron.leakage_value = leakage_term;
+	odin_setNeuronProperties(odin, neuron);
+}
+void odin_setNeuronDisabledState(Odin *odin, u8 neuron_index, u8 disabled_state){
+	Neuron neuron = odin_getNeuron(odin, neuron_index);
+	neuron.disabled = disabled_state;
+	odin_setNeuronProperties(odin, neuron);
+}
+
 
 

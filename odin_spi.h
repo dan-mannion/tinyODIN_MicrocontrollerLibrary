@@ -8,7 +8,6 @@
 #ifndef SPI_H_
 #define SPI_H_
 
-#include "timer.h"
 #include "odin_typedefs.h"
 #include "hardware_specific.h"
 

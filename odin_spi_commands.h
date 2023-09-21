@@ -35,6 +35,8 @@ void spi_activateSPIGateActivity(SPI_Interface *spi);
 void spi_deactivateSPIGateActivity(SPI_Interface *spi);
 void spi_enableOpenLoop(SPI_Interface *spi);
 void spi_disableOpenLoop(SPI_Interface *spi);
+void spi_set_SPI_MAX_NEUR(SPI_Interface *spi, u8 max_neurons);
+
 u32 spi_convertSynapseAddressToSPIFormat(SynapseAddress synapse);
 u32 spi_dataToSPIBitStream(SPIDataField datafield);
 void spi_writeSynapseMemory(SPI_Interface *spi, u8 preneuron_index, u8 postneuron_index, u8 synapse_value);
