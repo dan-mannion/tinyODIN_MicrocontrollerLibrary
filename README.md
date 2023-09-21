@@ -58,6 +58,7 @@ void my_gpioSetPinDirection(u8 pin, u8 mode){
 			break;
 		case(1):
 			pinMode(pin, INTPUT);
+			break;
 	}
 }
 void my_gpioWriteToPin(u8 pin, u8 value){
@@ -67,6 +68,7 @@ void my_gpioWriteToPin(u8 pin, u8 value){
 			break;
 		case(1):
 			digitalWrite(pin, HIGH);
+			break;
 	}
 }
 u8 my_gpioReadFromPin(u8 pin){
