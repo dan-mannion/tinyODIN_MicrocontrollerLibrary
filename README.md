@@ -78,7 +78,7 @@ void main(){
 	Synapse synapse_read = odin_getSynapse(&odin, preneuron, postneuron);
 
 	// Alternatively, to just read the value of the weight:
-	u8 synapse_weight = odin_getSynapseWeight*&odin, preneuron, postneuron);
+	u8 synapse_weight = odin_getSynapseWeight(&odin, preneuron, postneuron);
 }
 ```
 ## Reading and Writing Neuron Properties
@@ -115,6 +115,19 @@ void main(){
 	
 }
 
+```
+Similar to the synapses, there are functions to write/read only specific properties of the neurons as opposed to defining the entire neuron structure. The prototypes for these functions are shown below. Note that these functions are not more efficient than reading the entire neuron state with the ```odin_getNeuron``` function. Each of these functions call ```odin_getNeuron``` but return only a select element of the ```Neuron``` struct. These functions could be optimised by modifying them to read only a portion of the neuron's memory relevent to the property in question. 
+```c
+// Functions for reading specific properties of a neuron
+u16 odin_getNeuronMembranePotential(Odin *odin, u8 neuron_index);
+u16 odin_getNeuronThreshold(Odin *odin, u8 neuron_index);
+u8 odin_getNeuronLeakageTerm(Odin *odin, u8 neuron_index);
+u8 odin_getNeuronDisabledState(Odin *odin, u8 neuron_index);
+// Functions for setting specific properties of a neuron
+void odin_setNeuronMembranePotential(Odin *odin, u8 neuron_index, u16 membrane_potential);
+void odin_setNeuronThreshold(Odin *odin, u8 neuron_index, u16 threshold);
+void odin_setNeuronLeakageTerm(Odin *odin, u8 neuron_index, u8 leakage_term);
+void odin_setNeuronDisabledState(Odin *odin, u8 neuron_index, u8 disabled_state);
 ```
 
 ## AER Events: Triggering spikes, leakage events and reading outputs
