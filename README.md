@@ -19,7 +19,7 @@ To begin using the provided functions, there are two key tasks we must do before
 2. Define functions to do the following: set a GPIO pin's direction, write to a GPIO pin, and read from a GPIO pin.
 How to implement these functions will depend on the micrcontroller you are doing. However, below is an example for when using the Zynq 7000 SoC.
 ### Defining physical pin connections
-The pin mappings are defined in [hardware_specific.h](https://github.com/dan-mannion/tinyODIN_MicrocontrollerLibrary/blob/be1a8a89885529c55dd56d775294fd33ca26cbc1/hardware_specific.h#L14C1-L28C1). An example is shown below. Note that ODIN's clock pin is not referenced in this file. This is because the library does not attempt to drive this clock signal. Instead, the user must provide an external clock for ODIN or generate this signal or produce it using the microcontroller. As specified in the [tinyODIN repository](https://github.com/ChFrenkel/tinyODIN/tree/main/doc) the clock must be 4 times faster than the clock of the SPI signal. 
+The pin mappings are defined in [hardware_specific.h](https://github.com/dan-mannion/tinyODIN_MicrocontrollerLibrary/blob/be1a8a89885529c55dd56d775294fd33ca26cbc1/hardware_specific.h#L14C1-L28C1). An example is shown below. Note that ODIN's clock pin is not referenced in this file. This is because the library does not attempt to drive this clock signal. Instead, the user must provide an external clock for ODIN or generate this signal using the microcontroller. As specified in the [tinyODIN repository](https://github.com/ChFrenkel/tinyODIN/tree/main/doc) the clock must be 4 times faster than the clock of the SPI signal. 
 ```c
 #define RESET_PIN 2
 #define SPI_SCLK_PIN 0
