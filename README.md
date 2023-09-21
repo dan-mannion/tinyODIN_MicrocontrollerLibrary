@@ -64,7 +64,7 @@ void main(){
 	odin_setSynapseValue(&odin, preneuron, postneuron, snapse_weight);
 }
 ```
-If we want to read the value of a synapse we use the ```odin_getSynapse``` functions which returns a ```Synapse``` struct.
+If we want to read the value of a synapse we have to options. We can either use the ```odin_getSynapse``` functions which returns a ```Synapse``` struct or ```odin_getSynapseWeight``` to read only the weight's value. 
 ```c
 #include "odin.h"
 void main(){
@@ -76,6 +76,9 @@ void main(){
 	u8 postneuron = 1;
 
 	Synapse synapse_read = odin_getSynapse(&odin, preneuron, postneuron);
+
+	// Alternatively, to just read the value of the weight:
+	u8 synapse_weight = odin_getSynapseWeight*&odin, preneuron, postneuron);
 }
 ```
 ## Reading and Writing Neuron Properties
