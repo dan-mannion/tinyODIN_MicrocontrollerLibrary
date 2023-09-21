@@ -44,7 +44,8 @@ Once the physical pin mappings have been defined, and the custom functions for r
 void main(){
 	Odin odin;
 	odin_initChip(&odin, setPinDirection, writeToPin, readFromPin);
-	odin_enableChip(&odin). 
+	odin_enableChip(&odin);
+	odin_setMaxNeuronIndexToBeProcessed(&odin, 10); // Neurons unto and including this index will be processed. This should be set to the maximum number of neurons being used. 
 }
 ```
 
