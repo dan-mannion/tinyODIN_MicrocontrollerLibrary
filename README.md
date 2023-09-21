@@ -19,6 +19,23 @@ To begin using the provided functions, there are two key tasks we must do before
 2. Define functions to do the following: set a GPIO pin's direction, write to a GPIO pin, and read from a GPIO pin.
 How to implement these functions will depend on the micrcontroller you are doing. However, below is an example for when using the Zynq 7000 SoC.
 ### Defining physical pin connections
+The pin mappings are defined in [hardware_specific.h](https://github.com/dan-mannion/tinyODIN_MicrocontrollerLibrary/blob/be1a8a89885529c55dd56d775294fd33ca26cbc1/hardware_specific.h#L14C1-L28C1). An example is shown below. Note that ODIN's clock pin is not referenced in this file. This is because the library does not attempt to drive this clock signal. Instead, the user must provide an external clock for ODIN or generate this signal or produce it using the microcontroller. As specified in the [tinyODIN repository](https://github.com/ChFrenkel/tinyODIN/tree/main/doc) the clock must be 4 times faster than the clock of the SPI signal. 
+```c
+#define RESET_PIN 2
+#define SPI_SCLK_PIN 0
+#define SPI_MOSI_PIN 1
+#define SPI_MISO_PIN 3
+
+#define AER_OUT_REQ_PIN 5
+#define AER_OUT_ACK_PIN 4
+#define AER_OUT_ADDRESS_WIDTH 10
+#define AER_OUT_ADDRESS_OFFSET 6
+
+#define AER_IN_REQ_PIN 16
+#define AER_IN_ACK_PIN 17
+#define AER_IN_ADDRESS_WIDTH 8
+#define AER_IN_ADDRESS_OFFSET 18
+```
 ### Defining GPIO functions
 ## Initialising Odin and Setting Configuration Registers
 Once the physical pin mappings have been defined, and the custom functions for reading and writing to the GPIOs of your specific chip are defined, we can then instantiate a instance of the Odin chip using the code below. In general, when using a function provided by this library you will need to pass the pointer to the instance of the Odin chip. In this example the ``` odin_enableChip(&odin) ``` function is used to ensure the reset pin is pulled low ensuring ODIN is running and not currently reset. 
