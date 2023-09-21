@@ -197,13 +197,15 @@ void main(){
 # Code Walkthrough
 ```c
 void odin_initChip(Odin *odin, XGpio *gpio,
-                void (*set_pin_direction_function) (u8, u8),
-                void (*write_to_pin_function) (u8, u8),
-                u8 (*read_from_pin_function) (u8));
+		void (*set_pin_direction_function) (u8, u8),
+		void (*write_to_pin_function) (u8, u8),
+		u8 (*read_from_pin_function) (u8));
 void odin_enableChip(Odin *odin);
 void odin_disableChip(Odin *odin);
 void odin_enableOpenLoop(Odin *odin);
 void odin_disableOpenLoop(Odin *odin);
+void odin_setMaxNeuronIndexToBeProcessed(Odin *odin, u8 max_neurons);
+
 int odin_isEventAtOutput(Odin *odin);
 u8 odin_readEventAtOutput(Odin *odin);
 int odin_stimulateNeuron(Odin *odin, u8 neuron_index, u8 synapse_value);
@@ -211,12 +213,23 @@ int odin_triggerPresynapticEvent(Odin *odin, u8 presynaptic_neuron_index);
 int odin_triggerGlobalLeakageEvent(Odin *odin);
 int odin_triggerLeakageEventForNeuron(Odin *odin, u8 neuron_index);
 
-
 void printNeuron(UARTInterface *uart, Neuron neuron);
 Synapse odin_getSynapse(Odin *odin, u8 preneuron, u8 postneuron);
+u8 odin_getSynapseWeight(Odin *odin, u8 preneuron, u8 postneuron);
 void odin_setSynapseValue(Odin *odin, u8 preneuron, u8 postneuron, u8 synapse_value);
+
 Neuron odin_getNeuron(Odin *odin, u8 neuron_index);
+u16 odin_getNeuronMembranePotential(Odin *odin, u8 neuron_index);
+u16 odin_getNeuronThreshold(Odin *odin, u8 neuron_index);
+u8 odin_getNeuronLeakageTerm(Odin *odin, u8 neuron_index);
+u8 odin_getNeuronDisabledState(Odin *odin, u8 neuron_index);
+
+
 void odin_setNeuronProperties(Odin *odin, Neuron neuron_to_write);
+void odin_setNeuronMembranePotential(Odin *odin, u8 neuron_index, u16 membrane_potential);
+void odin_setNeuronThreshold(Odin *odin, u8 neuron_index, u16 threshold);
+void odin_setNeuronLeakageTerm(Odin *odin, u8 neuron_index, u8 leakage_term);
+void odin_setNeuronDisabledState(Odin *odin, u8 neuron_index, u8 disabled_state);
 ```
 
 When using these functions, you will encounter three key struct types: The Odin struct type represents the ODIN chip and stores both the AER and SPI interfaces. You shouldn't need to modify or handle the contents of this type. It is defined in odin.h.
